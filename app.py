@@ -1,24 +1,19 @@
-import os
 import telebot
-import locale
 import urllib
-import google.colab
-from ultralytics import YOLO, checks, hub
+from ultralytics import YOLO
 from PIL import Image
 from urllib.request import urlopen
-from google.colab.patches import cv2_imshow
+import matplotlib.pyplot as plt
+import cv2
 from openpyxl import Workbook
 from openpyxl.styles import Font, Color, Alignment
-from google.colab.patches import cv2
-from google.colab import drive
 
-drive.mount('/content/drive')
 
 message_instruction = ' Я бот, который умеет на основе нейросети искать на плане электромонтажа условные обозначения розеток и формировать коммерческое предложние на их монтаж.'
 message_instruction_2 = ' Если вы мне пришлёте лист с проектом на которм отображён план размещения розеток,то я с удовольствием расчитаю стоимость работ по их монтажу.'
 message_instruction_3 = ' Большая просьба прислать мне скрин с вашего дизайн проекта в хорошем качестве, фото сделанное телефоном я тоже понимаю, но пока значительно хуже (я только учусь). '
 
-model = YOLO('/content/drive/MyDrive/YOLO/Y15/detect/train3/weights/best.pt')
+model = YOLO('best.pt')
 
 def answer (ans):
   answer = f'Я насчитал на вашем плане {ans} розеток. Я отметил на вашем плане найденные мной розетки.'
@@ -38,14 +33,8 @@ def generate_offer (path, count):
                  underline='none',
                  strike=False,
                  color='000000FF')
-    
-    alignment=Alignment(horizontal='general',
-                     vertical='bottom',
-                     text_rotation=0,
-                     wrap_text=False,
-                     shrink_to_fit=False,
-                     indent=0)
-    
+
+
     sheet["A1"] = headers[0]
     sheet["A1"].font = font
     sheet["B1"] = headers[1]
@@ -64,7 +53,7 @@ def generate_offer (path, count):
 
     data = [dict(zip(headers, (1 , "сверление отверстия для подрозетника", 200, count,"шт.", count*200))),
             dict(zip(headers, (2 , "монтаж подрозетника", 100, count,"шт.", count*100))),
-            dict(zip(headers, (3 , "монтаж механизма розетки", 150, count,"шт.", count*150)))     
+            dict(zip(headers, (3 , "монтаж механизма розетки", 150, count,"шт.", count*150)))
             ]
 
     row = 3
@@ -77,11 +66,11 @@ def generate_offer (path, count):
         sheet[f'F{row}'] = d["итого"]
 
         row += 1
-    
+
     sheet["E7"] = "ВСЕГО"
-    sheet["E7"].font = font 
+    sheet["E7"].font = font
     sheet["F7"] = "=SUM(F3:F5)"
-    sheet["F7"].font = font 
+    sheet["F7"].font = font
 
     workbook.save(path)
 
@@ -104,17 +93,18 @@ def text_handler(message):
 def handle_docs_audio(message):
     document_id = message.document.file_id
     file_info = bot.get_file(document_id)
-    file_path = '/content/drive/MyDrive/YOLO/pic.jpg'
-    
+
+    file_path = 'pic.jpg'
+
     urllib.request.urlretrieve(f'http://api.telegram.org/file/bot{token}/{file_info.file_path}', file_path)
 
-    image_path = '/content/drive/MyDrive/YOLO/pic.jpg'
+    image_path = 'pic.jpg'
 
     image = Image.open(image_path)
 
     res = model(image)
 
-    image_path = '/content/drive/MyDrive/YOLO/pic.jpg'
+    image_path = 'pic.jpg'
 
     image = Image.open(image_path)
 
@@ -123,15 +113,15 @@ def handle_docs_audio(message):
     bot.send_message(message.chat.id, answer(len(res[0])))
 
     res_plotted = res[0].plot()
-    file = cv2_imshow(res_plotted)
-    image_res_path = '/content/drive/MyDrive/YOLO/doc_res.jpg'
+    file = plt.imshow(res_plotted)
+    image_res_path = 'doc_res.jpg'
 
-    cv2.imwrite('/content/drive/MyDrive/YOLO/doc_res.jpg', res_plotted)
+    cv2.imwrite('doc_res.jpg', res_plotted)
 
     file = open(image_res_path, 'rb')
     bot.send_photo(message.chat.id, file)
 
-    smeta_path = '/content/drive/MyDrive/YOLO/smeta.xlsx'
+    smeta_path = 'smeta.xlsx'
     generate_offer (smeta_path, len(res[0]))
     bot.send_document(message.chat.id, open(smeta_path, 'rb'))
 
@@ -139,19 +129,19 @@ def handle_docs_audio(message):
 @bot.message_handler(content_types=['photo'])
 def handle_photos(message):
     # Обработка фото
-    file_path = '/content/drive/MyDrive/YOLO/foto.jpg'
+    file_path = 'foto.jpg'
     photo_id = message.photo[-1].file_id
     file_info = bot.get_file(photo_id)
     urllib.request.urlretrieve(f'http://api.telegram.org/file/bot{token}/{file_info.file_path}', file_path)
     # Дополнительные действия с фото
 
-    image_path = '/content/drive/MyDrive/YOLO/foto.jpg'
+    image_path = 'foto.jpg'
 
     image = Image.open(image_path)
 
     res = model(image)
 
-    image_path = '/content/drive/MyDrive/YOLO/foto.jpg'
+    image_path = 'foto.jpg'
 
     image = Image.open(image_path)
 
@@ -161,15 +151,15 @@ def handle_photos(message):
     bot.send_message(message.chat.id, answer(len(res[0])))
 
     res_plotted = res[0].plot()
-    file = cv2_imshow(res_plotted)
-    image_res_path = '/content/drive/MyDrive/YOLO/foto_res.jpg'
+    file = plt.imshow(res_plotted)
+    image_res_path = 'foto_res.jpg'
 
-    cv2.imwrite('/content/drive/MyDrive/YOLO/foto_res.jpg', res_plotted)
+    cv2.imwrite('foto_res.jpg', res_plotted)
 
     file = open(image_res_path, 'rb')
     bot.send_photo(message.chat.id, file)
 
-    smeta_path = '/content/drive/MyDrive/YOLO/smeta.xlsx'
+    smeta_path = 'smeta.xlsx'
     generate_offer (smeta_path, len(res[0]))
     bot.send_document(message.chat.id, open(smeta_path, 'rb'))
 
