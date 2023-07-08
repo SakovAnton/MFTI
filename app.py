@@ -80,7 +80,10 @@ bot=telebot.TeleBot(token)
 
 @bot.message_handler(commands=['start'])
 def start_message(message):
-    bot.send_message(message.chat.id, 'Привет')
+    bot.send_message(message.chat.id, 'Привет!')
+    bot.send_message(message.chat.id, message_instruction)
+    bot.send_message(message.chat.id, message_instruction_2)
+    bot.send_message(message.chat.id, message_instruction_3)
 
 @bot.message_handler(content_types=['text'])
 def text_handler(message):
